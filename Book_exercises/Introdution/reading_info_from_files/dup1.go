@@ -1,6 +1,6 @@
 //dup1 выводит текст каждой строки, которая появляется в
 //стандарном вводе более одного раза, а также количество
-//ее появлений 
+//ее появлений
 //Note: Ctrl+Z in console for end entering
 package main
 
@@ -17,6 +17,9 @@ func main() {
 	//VALUE TYPE is int
 	input := bufio.NewScanner(os.Stdin)
 	for input.Scan() {
+		if input.Text() == "stop" {
+			break
+		}
 		counts[input.Text()]++
 		//shorting for following code:
 		//line := input.Text()

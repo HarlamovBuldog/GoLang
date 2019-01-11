@@ -5,14 +5,13 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func main() {
-	var s, sep string
-	for i := 0; i < len(os.Args); i++ {
-		s += sep + strconv.Itoa(i) + " " + os.Args[i]
-		sep = "\n"
+	s, sep := "", ""
+	for _, arg := range os.Args[1:] {
+		s += sep + arg
+		sep = " "
 	}
 	fmt.Println(s)
 }

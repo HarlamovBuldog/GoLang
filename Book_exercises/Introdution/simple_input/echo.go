@@ -1,4 +1,4 @@
-//выводит аргументы 
+//выводит аргументы
 //коммандной строки
 //реализация через цикл и один Println
 package main
@@ -6,10 +6,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
-func main() {
-	for i := 0; i < len(os.Args); i++ {
-		fmt.Println(i, os.Args[i], " ")
-	}
 
+func main() {
+	fmt.Println(strings.Join(os.Args[0:], " "))
 }

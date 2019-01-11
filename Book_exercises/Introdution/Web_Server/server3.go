@@ -11,9 +11,9 @@ import (
 var mu sync.Mutex
 var count int
 
-func main () {
-	http.HandleFunc("/", handler)	//each request calls handler
-	http.HandleFunc("/count", counter)
+func main() {
+	http.HandleFunc("/", handler) //each request calls handler
+	//http.HandleFunc("/count", counter)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 

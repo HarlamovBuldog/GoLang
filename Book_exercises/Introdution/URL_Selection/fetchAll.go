@@ -1,13 +1,14 @@
 package main
 
 import (
-	"io"
+	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"time"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -16,7 +17,6 @@ func main() {
 	ch := make(chan string)
 	for _, url := range os.Args[1:] {
 		if !strings.HasPrefix(url, prefix) {
-			//url = prefix + url
 			var s []string
 			s = append(s, prefix)
 			s = append(s, url)
@@ -24,9 +24,30 @@ func main() {
 		}
 		go fetch(url, ch)
 	}
+
+	// open output file
+	fo, err := os.Create("output.txt")
+	if err != nil {
+		panic(err)
+	}
+	// close fo on exit and check for its returned error
+	defer func() {
+		if err := fo.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	// make a write buffer
+	w := bufio.NewWriter(fo)
 	for range os.Args[1:] {
-		fmt.Println(<-ch)
+		//fmt.Println(<-ch)
+		if _, err := w.WriteString(<-ch + "\n"); err != nil {
+			panic(err)
+		}
 		//Getting from channel ch
+	}
+
+	if err = w.Flush(); err != nil {
+		panic(err)
 	}
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
 }
@@ -35,11 +56,11 @@ func fetch(url string, ch chan<- string) {
 	start := time.Now()
 	resp, err := http.Get(url)
 	if err != nil {
-		ch <- fmt.Sprint(err) 	//sending to channel ch
+		ch <- fmt.Sprint(err) //sending to channel ch
 		return
 	}
 	nbytes, err := io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close()	//Exception information leakage
+	resp.Body.Close() //Exception information leakage
 	if err != nil {
 		ch <- fmt.Sprintf("while reading %s: %v:", url, err)
 		return
