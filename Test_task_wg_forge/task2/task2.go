@@ -4,19 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 	"github.com/montanaflynn/stats"
 )
 
-type CatsStat struct {
-	mean   float64
-	median float64
-	mode   []float64
-}
-
 func main() {
-
-	connStr := "host=10.10.0.89 port=5432 user=wg_forge password=42a dbname=wg_forge_db sslmode=disable"
+	//do not forget to change host and pass
+	connStr := "host=localhost port=5432 user=wg_forge password=a42 dbname=wg_forge_db sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
@@ -57,26 +51,22 @@ func main() {
 	tailLengthMedian, _ := stats.Median(tailLengthArray)
 	tailLengthMode, _ := stats.Mode(tailLengthArray)
 
-	var tailLengthModeInt []int
-	for _, elem := range tailLengthMode {
-		tailLengthModeInt = append(tailLengthModeInt, int(elem))
-	}
+	tailLengthMean = float64(int64(tailLengthMean*10+0.5)) / 10
+	tailLengthMedian = float64(int64(tailLengthMedian*10+0.5)) / 10
 
 	whiskersLengthMean, _ := stats.Mean(whiskersLengthArray)
 	whiskersLengthMedian, _ := stats.Median(whiskersLengthArray)
 	whiskersLengthMode, _ := stats.Mode(whiskersLengthArray)
 
-	var whiskersLengthModeInt []int
-	for _, elem := range whiskersLengthMode {
-		whiskersLengthModeInt = append(whiskersLengthModeInt, int(elem))
-	}
+	whiskersLengthMean = float64(int64(whiskersLengthMean*10+0.5)) / 10
+	whiskersLengthMedian = float64(int64(whiskersLengthMedian*10+0.5)) / 10
 
-	fmt.Println(tailLengthMean, tailLengthMedian, tailLengthModeInt,
-		whiskersLengthMean, whiskersLengthMedian, whiskersLengthModeInt)
+	fmt.Println(tailLengthMean, tailLengthMedian, tailLengthMode,
+		whiskersLengthMean, whiskersLengthMedian, whiskersLengthMode)
 
-	result, err := db.Exec("insert into cat_colors_info values ($1, $2, $3, $4, $5, $6)",
-		tailLengthMean, tailLengthMedian, tailLengthModeInt,
-		whiskersLengthMean, whiskersLengthMedian, whiskersLengthModeInt)
+	result, err := db.Exec("insert into cats_stat values ($1, $2, $3, $4, $5, $6)",
+		tailLengthMean, tailLengthMedian, pq.Array(tailLengthMode),
+		whiskersLengthMean, whiskersLengthMedian, pq.Array(whiskersLengthMode))
 
 	if err != nil {
 		panic(err)
