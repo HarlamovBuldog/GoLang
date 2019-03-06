@@ -14,13 +14,35 @@ import (
 
 var mu sync.Mutex
 
+type CatColor string
+
 type Cats struct {
 	name           string
-	color          string
+	color          string `sql:"type:cat_color"`
 	tailLength     int
 	whiskersLength int
 }
 
+/*
+func (catclr *CatColor) Scan(value interface{}) error {
+	if value == nil {
+		*catclr = ""
+		return nil
+	}
+	if bv, err := driver.String.ConvertValue(value); err == nil {
+		if v, ok := bv.(string); ok {
+			*catclr = CatColor(v)
+			return nil
+		}
+	}
+
+	return errors.New("failed to Scan CatColor")
+}
+
+func (catclr CatColor) Value() (driver.Value, error) {
+	return string(catclr), nil
+}
+*/
 func main() {
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/ping", ping)
@@ -44,7 +66,7 @@ func cats(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 
 	//do not forget to change host and pass
-	connStr := "host=10.10.0.89 port=5432 user=wg_forge password=42a dbname=wg_forge_db sslmode=disable"
+	connStr := "host=localhost port=5432 user=wg_forge password=a42 dbname=wg_forge_db sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
@@ -56,75 +78,106 @@ func cats(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	/*
-		rows, err := db.Query("SELECT * FROM cats")
-		if err != nil {
-			panic(err)
-		}
-		defer rows.Close()
+	rows, err := db.Query("SELECT * FROM cats")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
 
-		var target []interface{}
+	//testCatsSlice := []Cats{}
+	columnNames, err := rows.Columns()
+	if err != nil {
+		panic(err)
+	}
 
-		for rows.Next() {
-			if err := rows.Scan(&target); err != nil {
-				log.Fatal(err)
-			}
+	count := len(columnNames)
+	values := make([]Cats, count)
+	scanArgs := make([]Cats, count)
+	for i := range values {
+		scanArgs[i] = &values[i]
+	}
+
+	masterData := make(map[string][]interface{})
+
+	for rows.Next() {
+		testCat := Cats{}
+		if err := rows.Scan(&testCat.name, &testCat.color,
+			&testCat.tailLength, &testCat.whiskersLength); err != nil {
+			log.Fatal(err)
 		}
-	*/
-	b, err := queryToJSON(db, "SELECT * FROM cats")
+		for _, colName := range columnNames {
+			masterData[colName] =
+				append(masterData[colName], testCat)
+		}
+	}
+
+	b, err := json.MarshalIndent(masterData, "", "\t")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	w.Write(b)
 
 	/*
-
-		u, err := r.URL.Parse(r.URL.String())
-		if err != nil {
-			log.Fatal(err)
+		err1 := json.NewEncoder(w).Encode(testCatsSlice)
+		if err1 != nil {
+			log.Fatalln(err)
 		}
+	*/
+	/*
+		b, err := queryToJSON(db, "SELECT * FROM cats")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		w.Write(b)
 
-		//q := u.Query().Get("")
 
 
-			keyValuePair := r.Form
-			for key, value1 := range keyValuePair {
-				if len(value1) < 1 {
-					continue
-				}
-				fmt.Fprintf(w, key+" = "+value1[0]+"\n")
+			u, err := r.URL.Parse(r.URL.String())
+			if err != nil {
+				log.Fatal(err)
 			}
 
-			for key, value1 := range keyValuePair {
-				if len(value1) < 1 {
-					continue
+			//q := u.Query().Get("")
+
+
+				keyValuePair := r.Form
+				for key, value1 := range keyValuePair {
+					if len(value1) < 1 {
+						continue
+					}
+					fmt.Fprintf(w, key+" = "+value1[0]+"\n")
 				}
-				switch key {
-				case "cycles":
-					f64, err := strconv.ParseFloat(value1[0], 64)
-					if err == nil {
-						cycles = f64
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
+
+				for key, value1 := range keyValuePair {
+					if len(value1) < 1 {
+						continue
 					}
-				case "size":
-					i, err := strconv.ParseInt(value1[0], 10, 64)
-					if err == nil {
-						size = int(i)
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
+					switch key {
+					case "cycles":
+						f64, err := strconv.ParseFloat(value1[0], 64)
+						if err == nil {
+							cycles = f64
+							fmt.Fprintf(w, "Success! Value of "+key+
+								" changed to "+value1[0]+"\n")
+						}
+					case "size":
+						i, err := strconv.ParseInt(value1[0], 10, 64)
+						if err == nil {
+							size = int(i)
+							fmt.Fprintf(w, "Success! Value of "+key+
+								" changed to "+value1[0]+"\n")
+						}
+					case "nframes":
+						i, err := strconv.ParseInt(value1[0], 10, 64)
+						if err == nil {
+							nframes = int(i)
+							fmt.Fprintf(w, "Success! Value of "+key+
+								" changed to "+value1[0]+"\n")
+						}
+					default:
+						fmt.Fprintf(w, "Wrong key! "+key+"\n")
 					}
-				case "nframes":
-					i, err := strconv.ParseInt(value1[0], 10, 64)
-					if err == nil {
-						nframes = int(i)
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
-					}
-				default:
-					fmt.Fprintf(w, "Wrong key! "+key+"\n")
 				}
-			}
 	*/
 	mu.Unlock()
 }
