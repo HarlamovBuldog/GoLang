@@ -24,6 +24,26 @@ type Cats struct {
 	whiskersLength int
 }
 
+/*
+func (catclr *CatColor) Scan(value interface{}) error {
+	if value == nil {
+		*catclr = ""
+		return nil
+	}
+	if bv, err := driver.String.ConvertValue(value); err == nil {
+		if v, ok := bv.(string); ok {
+			*catclr = CatColor(v)
+			return nil
+		}
+	}
+
+	return errors.New("failed to Scan CatColor")
+}
+
+func (catclr CatColor) Value() (driver.Value, error) {
+	return string(catclr), nil
+}
+*/
 func main() {
 	http.HandleFunc("/", handler)
 	http.HandleFunc("/ping", ping)
@@ -58,22 +78,54 @@ func cats(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	/*
+		rows, err := db.Query("SELECT * FROM cats")
+		if err != nil {
+			panic(err)
+		}
+		defer rows.Close()
 
-	var restrictions = map[string][]string{
-		"attribute": []string{"name", "color", "tail_length", "whiskers_length"},
-	}
+		//testCatsSlice := []Cats{}
+		columnNames, err := rows.Columns()
+		if err != nil {
+			panic(err)
+		}
 
-	selectWhat := r.URL.Query().Get("attribute")
-	if selectWhat == "" {
-		selectWhat = "*"
-	} else {
-		//permittedAttrs := []string{"name", "color", "tail_length", "whiskers_length"}
-		selectWhat, ok := restrictions["attribute"][selectWhat]
-	}
+		count := len(columnNames)
+		values := make([]Cats, count)
+		scanArgs := make([]Cats, count)
+		for i := range values {
+			scanArgs[i] = &values[i]
+		}
 
-	queryString := "SELECT " + selectWhat + " FROM cats"
+		masterData := make(map[string][]interface{})
 
-	b, err := queryToJSON(db, queryString)
+		for rows.Next() {
+			testCat := Cats{}
+			if err := rows.Scan(&testCat.name, &testCat.color,
+				&testCat.tailLength, &testCat.whiskersLength); err != nil {
+				log.Fatal(err)
+			}
+			for _, colName := range columnNames {
+				masterData[colName] =
+					append(masterData[colName], testCat)
+			}
+		}
+
+		b, err := json.MarshalIndent(masterData, "", "\t")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		w.Write(b)
+
+
+			err1 := json.NewEncoder(w).Encode(testCatsSlice)
+			if err1 != nil {
+				log.Fatalln(err)
+			}
+	*/
+
+	b, err := queryToJSON(db, "SELECT * FROM cats")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -135,7 +187,6 @@ func queryToJSON(db *sql.DB, query string, args ...interface{}) ([]byte, error) 
 	// an array of JSON objects
 	// the map key is the field name
 	var objects []map[string]interface{}
-	//Note:guess instead of strColor we can use custom type with Valuer interface
 	var strColor *string
 	rows, err := db.Query(query, args...)
 	if err != nil {
