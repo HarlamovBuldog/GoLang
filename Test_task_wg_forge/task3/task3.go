@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strconv"
+	"strings"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -59,76 +61,115 @@ func cats(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var restrictions = map[string][]string{
-		"attribute": []string{"name", "color", "tail_length", "whiskers_length"},
+	var data struct {
+		Attributes []string `http:"attribute"`
+		Order      string   `http:"order"`
+		Limit      int      `http:"limit"`
+		Offset     int      `http:"offset"`
+	}
+	/*
+		var restrictions = map[string][]string{
+			"attribute": []string{"name", "color", "tail_length", "whiskers_length"},
+		}
+	*/
+	if err := Unpack(r, data); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	selectWhat := r.URL.Query().Get("attribute")
-	if selectWhat == "" {
-		selectWhat = "*"
-	} else {
-		//permittedAttrs := []string{"name", "color", "tail_length", "whiskers_length"}
-		selectWhat, ok := restrictions["attribute"][selectWhat]
+	fmt.Fprintf(w, "Search: %+v\n", data)
+	/*
+		selectWhat := r.URL.Query().Get("attribute")
+		if selectWhat == "" {
+			selectWhat = "*"
+		} else {
+			//permittedAttrs := []string{"name", "color", "tail_length", "whiskers_length"}
+			selectWhat, ok := restrictions["attribute"][selectWhat]
+		}
+	*/
+	queryString := "SELECT "
+	i := 1
+	for counter, attr := range data.Attributes {
+		queryString = queryString + attr
+		if counter-i > 1 {
+			queryString = queryString + ", "
+		}
 	}
-
-	queryString := "SELECT " + selectWhat + " FROM cats"
-
+	if len(data.Attributes) == 0 {
+		queryString = queryString + "*"
+	}
+	if data.Offset != 0 {
+		queryString = queryString + " OFFSET " +
+			strconv.Itoa(data.Offset)
+	}
+	if data.Limit != 0 {
+		queryString = queryString + " LIMIT " +
+			strconv.Itoa(data.Limit)
+	}
+	if data.Order != "" {
+		queryString = queryString + " " + data.Order
+	}
 	b, err := queryToJSON(db, queryString)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	w.Write(b)
-
-	/*
-
-		u, err := r.URL.Parse(r.URL.String())
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		//q := u.Query().Get("")
-
-
-			keyValuePair := r.Form
-			for key, value1 := range keyValuePair {
-				if len(value1) < 1 {
-					continue
-				}
-				fmt.Fprintf(w, key+" = "+value1[0]+"\n")
-			}
-
-			for key, value1 := range keyValuePair {
-				if len(value1) < 1 {
-					continue
-				}
-				switch key {
-				case "cycles":
-					f64, err := strconv.ParseFloat(value1[0], 64)
-					if err == nil {
-						cycles = f64
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
-					}
-				case "size":
-					i, err := strconv.ParseInt(value1[0], 10, 64)
-					if err == nil {
-						size = int(i)
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
-					}
-				case "nframes":
-					i, err := strconv.ParseInt(value1[0], 10, 64)
-					if err == nil {
-						nframes = int(i)
-						fmt.Fprintf(w, "Success! Value of "+key+
-							" changed to "+value1[0]+"\n")
-					}
-				default:
-					fmt.Fprintf(w, "Wrong key! "+key+"\n")
-				}
-			}
-	*/
 	mu.Unlock()
+}
+
+func Unpack(req *http.Request, ptr interface{}) error {
+	if err := req.ParseForm(); err != nil {
+		return err
+	}
+
+	fields := make(map[string]reflect.Value)
+	v := reflect.ValueOf(ptr).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		fieldInfo := v.Type().Field(i)
+		tag := fieldInfo.Tag
+		name := tag.Get("http")
+		if name == "" {
+			name = strings.ToLower(fieldInfo.Name)
+		}
+		fields[name] = v.Field(i)
+	}
+
+	for name, values := range req.Form {
+		f := fields[name]
+		if !f.IsValid() {
+			continue
+		}
+		for _, value := range values {
+			if f.Kind() == reflect.Slice {
+				elem := reflect.New(f.Type().Elem()).Elem()
+				if err := populate(elem, value); err != nil {
+					return fmt.Errorf("%s: %v", name, err)
+				}
+				f.Set(reflect.Append(f, elem))
+			} else {
+				if err := populate(f, value); err != nil {
+					return fmt.Errorf("%s: %v", name, err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func populate(v reflect.Value, value string) error {
+	switch v.Kind() {
+	case reflect.String:
+		v.SetString(value)
+	case reflect.Int:
+		i, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return err
+		}
+		v.SetInt(i)
+	default:
+		return fmt.Errorf("bad view %s", v.Type())
+	}
+	return nil
 }
 
 func queryToJSON(db *sql.DB, query string, args ...interface{}) ([]byte, error) {
