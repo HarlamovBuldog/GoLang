@@ -62,42 +62,51 @@ func cats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-		Attributes []string `http:"attribute"`
-		Order      string   `http:"order"`
-		Limit      int      `http:"limit"`
-		Offset     int      `http:"offset"`
+		Attribute string `http:"attribute"`
+		Order     string `http:"order"`
+		Limit     int    `http:"limit"`
+		Offset    int    `http:"offset"`
 	}
+	data.Order = "ASC"
 	/*
 		var restrictions = map[string][]string{
 			"attribute": []string{"name", "color", "tail_length", "whiskers_length"},
 		}
 	*/
-	if err := Unpack(r, data); err != nil {
+	if err := Unpack(r, &data); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	fmt.Fprintf(w, "Search: %+v\n", data)
 	/*
-		selectWhat := r.URL.Query().Get("attribute")
-		if selectWhat == "" {
-			selectWhat = "*"
-		} else {
-			//permittedAttrs := []string{"name", "color", "tail_length", "whiskers_length"}
-			selectWhat, ok := restrictions["attribute"][selectWhat]
+			selectWhat := r.URL.Query().Get("attribute")
+			if selectWhat == "" {
+				selectWhat = "*"
+			} else {
+				//permittedAttrs := []string{"name", "color", "tail_length", "whiskers_length"}
+				selectWhat, ok := restrictions["attribute"][selectWhat]
+			}
+				i := 1
+			for counter, attr := range data.Attributes {
+			queryString = queryString + attr
+			if counter-i > 1 {
+				queryString = queryString + ", "
+			}
+		}
+		if len(data.Attributes) == 0 {
+			queryString = queryString + "*"
 		}
 	*/
-	queryString := "SELECT "
-	i := 1
-	for counter, attr := range data.Attributes {
-		queryString = queryString + attr
-		if counter-i > 1 {
-			queryString = queryString + ", "
+	queryString := "SELECT * FROM cats"
+
+	if data.Attribute != "" {
+		queryString = queryString + " ORDER BY " + data.Attribute
+		if data.Order != "" {
+			queryString = queryString + " " + data.Order
 		}
 	}
-	if len(data.Attributes) == 0 {
-		queryString = queryString + "*"
-	}
+
 	if data.Offset != 0 {
 		queryString = queryString + " OFFSET " +
 			strconv.Itoa(data.Offset)
@@ -106,9 +115,7 @@ func cats(w http.ResponseWriter, r *http.Request) {
 		queryString = queryString + " LIMIT " +
 			strconv.Itoa(data.Limit)
 	}
-	if data.Order != "" {
-		queryString = queryString + " " + data.Order
-	}
+
 	b, err := queryToJSON(db, queryString)
 	if err != nil {
 		log.Fatalln(err)
