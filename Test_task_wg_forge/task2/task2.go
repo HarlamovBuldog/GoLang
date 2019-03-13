@@ -10,7 +10,7 @@ import (
 
 func main() {
 	//do not forget to change host and pass
-	connStr := "host=localhost port=5432 user=wg_forge password=a42 dbname=wg_forge_db sslmode=disable"
+	connStr := "host=10.10.0.89 port=5432 user=wg_forge password=42a dbname=wg_forge_db sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
