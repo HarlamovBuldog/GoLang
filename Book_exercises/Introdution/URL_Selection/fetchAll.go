@@ -1,3 +1,6 @@
+//fetchAll executes parallel URL selection
+//and tells about time spent and about answer size of each URL.
+//Task 1.10 implementation from book page 41
 package main
 
 import (
@@ -7,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -39,11 +43,15 @@ func main() {
 	// make a write buffer
 	w := bufio.NewWriter(fo)
 	for range os.Args[1:] {
-		//fmt.Println(<-ch)
-		if _, err := w.WriteString(<-ch + "\n"); err != nil {
+		//Getting string from channel ch
+		strFromCh := <-ch
+		fmt.Println(strFromCh)
+		if _, err := w.WriteString(strFromCh + "\n"); err != nil {
 			panic(err)
 		}
-		//Getting from channel ch
+	}
+	if _, err := w.WriteString(strconv.FormatFloat(time.Since(start).Seconds(), 'f', 2, 64) + "s elapsed\n"); err != nil {
+		panic(err)
 	}
 
 	if err = w.Flush(); err != nil {
@@ -56,11 +64,13 @@ func fetch(url string, ch chan<- string) {
 	start := time.Now()
 	resp, err := http.Get(url)
 	if err != nil {
-		ch <- fmt.Sprint(err) //sending to channel ch
+		//writing err string to channel ch
+		ch <- fmt.Sprint(err)
 		return
 	}
 	nbytes, err := io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close() //Exception information leakage
+	//Information leakage exclusion with Close()
+	resp.Body.Close()
 	if err != nil {
 		ch <- fmt.Sprintf("while reading %s: %v:", url, err)
 		return
