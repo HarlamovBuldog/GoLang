@@ -1,3 +1,0 @@
-0.31s    9387 http://vk.com
-0.37s  289335 http://mail.ru
-0.77s    6815 http://godoc.org
