@@ -1,6 +1,7 @@
 //Lissajous generates animated GIF
 //from random Lissajou's figures
-
+//Note: go run lissajous.go > out.gif to make .gif file
+//Task 1.5 and 1.6 realization from book page 37
 package main
 
 import (
