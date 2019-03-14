@@ -2,6 +2,9 @@
 //стандарном вводе более одного раза, а также количество
 //ее появлений
 //Note: Ctrl+Z in console for end entering
+//Note: or just much easier way to specify any string
+//that will break for cycle
+//In our example it's string 'stop'
 package main
 
 import (
@@ -11,19 +14,21 @@ import (
 )
 
 func main() {
-	counts := make(map[string]int)
 	//MAP is pair called "key-value"
 	//KEY TYPE is string
 	//VALUE TYPE is int
+	counts := make(map[string]int)
+
 	input := bufio.NewScanner(os.Stdin)
 	for input.Scan() {
 		if input.Text() == "stop" {
 			break
 		}
-		counts[input.Text()]++
-		//shorting for following code:
+		//shortcut for the following code:
 		//line := input.Text()
 		//counts[line] = counts[line] + 1
+		counts[input.Text()]++
+
 	}
 	//Note: Ignoring potential errors
 	//from input.Err()

@@ -1,5 +1,6 @@
 //выводит аргументы
 //коммандной строки
+//Note: Task 1.1 and Task 1.2 realization from book page 29
 package main
 
 import (
