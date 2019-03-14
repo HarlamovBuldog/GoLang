@@ -1,6 +1,6 @@
 //Fetch.go displays a response to a
 //request for an input URL
-
+//Task 1.7, 1.8 and 1.9 realization from book page 39
 package main
 
 import (
