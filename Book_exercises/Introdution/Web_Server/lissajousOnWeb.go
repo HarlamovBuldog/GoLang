@@ -1,6 +1,6 @@
 //Lissajous generates animated GIF
 //from random Lissajou's figures
-
+//Task 1.12 realization from book page 45
 package main
 
 import (
@@ -13,12 +13,14 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
 
 func main() {
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		regulator(r)
 		lissajous(w)
 	}
 	http.HandleFunc("/lissajous", handler) //each request calls handler
@@ -29,7 +31,7 @@ func main() {
 			lissajous(w)
 		})
 	*/
-	http.HandleFunc("/", regulator)
+	//http.HandleFunc("/", regulator)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
@@ -72,7 +74,7 @@ func lissajous(out io.Writer) {
 	gif.EncodeAll(out, &anim)
 }
 
-func regulator(w http.ResponseWriter, r *http.Request) {
+func regulator(r *http.Request) {
 
 	r.ParseForm()
 	keyValuePair := r.Form
@@ -80,7 +82,7 @@ func regulator(w http.ResponseWriter, r *http.Request) {
 		if len(value1) < 1 {
 			continue
 		}
-		fmt.Fprintf(w, key+" = "+value1[0]+"\n")
+		fmt.Fprintf(os.Stdout, key+" = "+value1[0]+"\n")
 	}
 
 	for key, value1 := range keyValuePair {
@@ -90,27 +92,27 @@ func regulator(w http.ResponseWriter, r *http.Request) {
 		switch key {
 		case "cycles":
 			f64, err := strconv.ParseFloat(value1[0], 64)
-			if err == nil {
+			if err == nil && cycles != f64 {
 				cycles = f64
-				fmt.Fprintf(w, "Success! Value of "+key+
+				fmt.Fprintf(os.Stdout, "Success! Value of "+key+
 					" changed to "+value1[0]+"\n")
 			}
 		case "size":
 			i, err := strconv.ParseInt(value1[0], 10, 64)
-			if err == nil {
+			if err == nil && size != int(i) {
 				size = int(i)
-				fmt.Fprintf(w, "Success! Value of "+key+
+				fmt.Fprintf(os.Stdout, "Success! Value of "+key+
 					" changed to "+value1[0]+"\n")
 			}
 		case "nframes":
 			i, err := strconv.ParseInt(value1[0], 10, 64)
-			if err == nil {
+			if err == nil && nframes != int(i) {
 				nframes = int(i)
-				fmt.Fprintf(w, "Success! Value of "+key+
+				fmt.Fprintf(os.Stdout, "Success! Value of "+key+
 					" changed to "+value1[0]+"\n")
 			}
 		default:
-			fmt.Fprintf(w, "Wrong key! "+key+"\n")
+			fmt.Fprintf(os.Stdout, "Wrong key! "+key+"\n")
 		}
 	}
 }
