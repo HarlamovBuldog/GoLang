@@ -1,10 +1,10 @@
 package main
 
 import (
+	"Book_exercises/chapter2/tempconv"
 	"fmt"
 	"os"
 	"strconv"
-	"tempconv"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 		f := tempconv.Fahrenheit(t)
 		c := tempconv.Celsius(t)
 		k := tempconv.Kelvin(t)
-		fmt.Printf("%s = %s, %s = %s\n%s = %s, %s = %s\n%s = %s, %s = %s",
+		fmt.Printf("%s = %s, %s = %s\n%s = %s, %s = %s\n%s = %s, %s = %s\n",
 			c, tempconv.CToK(c), c, tempconv.CToF(c),
 			f, tempconv.FToC(f), f, tempconv.FToK(f),
 			k, tempconv.KToC(k), k, tempconv.KToF(k))
