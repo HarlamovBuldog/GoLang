@@ -1,3 +1,4 @@
+// ServeMux implementation
 package main
 
 import (
@@ -9,7 +10,7 @@ import (
 func main() {
 	db := database{"shoes": 50, "socks": 5}
 	mux := http.NewServeMux()
-	//http.HandleFunc(db.list) string means type conversion,
+	//http.HandlerFunc(db.list) string means type conversion,
 	//not call of the function
 	mux.Handle("/list", http.HandlerFunc(db.list))
 	// these 2 strings can be shorten to

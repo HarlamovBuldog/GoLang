@@ -1,3 +1,5 @@
+// create custom map database and ServeHTTP method
+// for it to implement http.Handler interface
 package main
 
 import (

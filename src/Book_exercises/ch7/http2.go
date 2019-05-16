@@ -1,3 +1,6 @@
+// create custom map database and ServeHTTP method
+// for it to implement http.Handler interface
+// ServeHTTP has also improved URL.Path handling here
 package main
 
 import (
