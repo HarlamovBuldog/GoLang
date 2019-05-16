@@ -1,4 +1,5 @@
-package main
+//package sorting provides some sorting functions
+package sorting
 
 import (
 	"fmt"
@@ -16,7 +17,7 @@ type Track struct {
 	Length time.Duration
 }
 
-var tracks = []*Track{
+var TracksInit = []*Track{
 	{"Go", "Delilah", "From the Roots Up", 2012, length("3m38s")},
 	{"Go", "Moby", "Moby", 1992, length("3m37s")},
 	{"Go Ahead", "Alicia Keys", "As I Am", 2007, length("4m36s")},
@@ -29,6 +30,10 @@ func length(s string) time.Duration {
 		panic(s)
 	}
 	return d
+}
+
+func CountTracks(tracks []*Track) int {
+	return len(tracks)
 }
 
 func printTracks(tracks []*Track) {
@@ -54,6 +59,12 @@ func (x byYear) Len() int           { return len(x) }
 func (x byYear) Less(i, j int) bool { return x[i].Year < x[j].Year }
 func (x byYear) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 
+type ByTitle []*Track
+
+func (x ByTitle) Len() int           { return len(x) }
+func (x ByTitle) Less(i, j int) bool { return x[i].Year < x[j].Year }
+func (x ByTitle) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+
 type customSort struct {
 	t    []*Track
 	less func(x, y *Track) bool
@@ -63,11 +74,15 @@ func (x customSort) Len() int           { return len(x.t) }
 func (x customSort) Less(i, j int) bool { return x.less(x.t[i], x.t[j]) }
 func (x customSort) Swap(i, j int)      { x.t[i], x.t[j] = x.t[j], x.t[i] }
 
+func SortTableTest() {
+	sort.Sort(byYear(TracksInit))
+}
+
 func main() {
-	//sort.Sort(sort.Reverse(byArtist(tracks)))
-	//sort.Sort(byArtist(tracks))
-	//sort.Sort(byYear(tracks))
-	sort.Sort(customSort{tracks, func(x, y *Track) bool {
+	//sort.Sort(sort.Reverse(byArtist(TracksInit)))
+	//sort.Sort(byArtist(TracksInit))
+	//sort.Sort(byYear(TracksInit))
+	sort.Sort(customSort{TracksInit, func(x, y *Track) bool {
 		if x.Title != y.Title {
 			return x.Title < y.Title
 		}
@@ -79,5 +94,5 @@ func main() {
 		}
 		return false
 	}})
-	printTracks(tracks)
+	printTracks(TracksInit)
 }
