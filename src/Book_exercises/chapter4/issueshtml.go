@@ -1,3 +1,5 @@
+// string to make .html file:
+// go run issueshtml.go > filename.html
 package main
 
 import (
