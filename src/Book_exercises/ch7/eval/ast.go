@@ -6,6 +6,8 @@ package myeval
 type Expr interface {
 	// Eval returns value of given Expr in Env enviroment.
 	Eval(env Env) float64
+	// Check reports about errors in passed Expr and add its Vars.
+	Check(vars map[Var]bool) error
 }
 
 // Var determines variable, for example x.
