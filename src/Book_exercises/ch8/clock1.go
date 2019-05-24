@@ -3,14 +3,20 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 
+var portFlag = flag.Int("port", 8000, "number of port to work with")
+
 func main() {
-	listener, err := net.Listen("tcp", "localhost:8000")
+	flag.Parse()
+	strPortFlag := strconv.Itoa(*portFlag)
+	listener, err := net.Listen("tcp", "localhost:"+strPortFlag)
 	if err != nil {
 		log.Fatal(err)
 	}
