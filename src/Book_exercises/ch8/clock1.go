@@ -1,5 +1,6 @@
 // Clock1 presents TCP-server,
 // which periodically shows time.
+// Exercise 8.1 realization from book (port flag)
 package main
 
 import (
@@ -34,7 +35,7 @@ func main() {
 func handleConn(c net.Conn) {
 	defer c.Close()
 	for {
-		_, err := io.WriteString(c, time.Now().Format("15:04:05\n"))
+		_, err := io.WriteString(c, time.Now().Format("15:04:05"))
 		if err != nil {
 			return // for example, client disconnection
 		}
