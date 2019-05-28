@@ -4,10 +4,27 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
 )
+
+func main() {
+	listener, err := net.Listen("tcp", "localhost:8000")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Print(err) // for example, connection lost
+			continue
+		}
+		//handleConn(conn)    // the only one connection processing
+		go handleConn(conn) // for parallel processing
+	}
+}
 
 func echo(c net.Conn, shout string, delay time.Duration) {
 	fmt.Fprintln(c, "\t", strings.ToUpper(shout))
@@ -20,7 +37,8 @@ func echo(c net.Conn, shout string, delay time.Duration) {
 func handleConn(c net.Conn) {
 	input := bufio.NewScanner(c)
 	for input.Scan() {
-		echo(c, input.Text(), 1*time.Second)
+		go echo(c, input.Text(), 1*time.Second)
+		//echo(c, input.Text(), 1*time.Second)
 	}
 	// Comment: ignore pontial errors from input.Err()
 	c.Close()
